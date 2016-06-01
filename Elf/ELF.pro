@@ -9,6 +9,8 @@ CONFIG   += c++11
 
 CONFIG(release, debug|release):DEFINES += QT_NO_DEBUG_OUTPUT
 
+QT.testlib.CONFIG -= console
+
 INCLUDEPATH += C:/Qt
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
@@ -32,7 +34,8 @@ SOURCES += main.cpp\
     ../ANGEL/Equipment/LockInAmplifier/SR830/SR830.cpp \
     ../ANGEL/Equipment/LockInAmplifier/SR844/SR844.cpp \
     ../ANGEL/Equipment/LockInAmplifier/SR865/SR865.cpp \
-    ../ANGEL/Functions/AllFunctions.cpp
+    ../ANGEL/Functions/AllFunctions.cpp \
+    qcustomplot.cpp
 
 HEADERS  += Elf.h \
     ../ANGEL/DataStructures/DataSharing/TDataSharing.h \
@@ -51,6 +54,7 @@ HEADERS  += Elf.h \
     ../ANGEL/Equipment/LockInAmplifier/AllLockInAmplifiers.h \
     ../ANGEL/Equipment/AllEquipment.h \
     ../ANGEL/Functions/AllFunctions.h \
-    ../ANGEL/Angel.h
+    ../ANGEL/Angel.h \
+    qcustomplot.h
 
 FORMS    += Elf.ui
