@@ -459,16 +459,16 @@
        <item>
         <layout class="QVBoxLayout" name="verticalLayout_8">
          <item>
-          <widget class="QLabel" name="labelXAxis">
+          <widget class="QLabel" name="labelYAxis">
            <property name="text">
-            <string>X Axis:</string>
+            <string>Y Axis:</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QLabel" name="labelYAxis">
+          <widget class="QLabel" name="labelXAxis">
            <property name="text">
-            <string>Y Axis:</string>
+            <string>X Axis:</string>
            </property>
           </widget>
          </item>
@@ -477,7 +477,7 @@
        <item>
         <layout class="QVBoxLayout" name="verticalLayout_9">
          <item>
-          <widget class="QComboBox" name="comboBoxXAxisValue">
+          <widget class="QComboBox" name="comboBoxYAxisValue">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -487,7 +487,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="comboBoxYAxisValue">
+          <widget class="QComboBox" name="comboBoxXAxisValue">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>

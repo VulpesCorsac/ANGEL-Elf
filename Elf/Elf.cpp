@@ -92,10 +92,17 @@ Elf::Elf(QWidget *parent) :
     ui->customPlot->clearGraphs();
     ui->customPlot->addGraph();
 
+    ui->customPlot->xAxis->setLabel(ui->comboBoxXAxisValue->currentText());
+    ui->customPlot->yAxis->setLabel(ui->comboBoxYAxisValue->currentText());
+
     ui->customPlot->xAxis->setTickLabelType(QCPAxis::ltNumber);
     ui->customPlot->axisRect()->setupFullAxesBox();
 
     connect(ui->customPlot, SIGNAL(mouseMove(QMouseEvent*)), this, SLOT(on_graph_Clicked(QMouseEvent*)));
+
+    connect(&(this->run), SIGNAL(timeout()), this, SLOT(updateGraph()));
+
+    experimentData.clear();
 
     J4F();
 
@@ -240,6 +247,171 @@ void Elf::on_pushButtonRangeManualreplot_clicked()
     return;
 }
 
+void Elf::updateGraph()
+{
+    if (ui->comboBoxRange->currentText() == "Manual")
+        return;
+
+    qDebug() << "UPDATING GRAPH";
+
+    ui->customPlot->xAxis->setRange(ui->lineEditRangeXmin->text().toDouble() * (1-this->subDown),
+                                    ui->lineEditRangeXmax->text().toDouble() * (1+this->addUp));
+    ui->customPlot->yAxis->setRange(ui->lineEditRangeYmin->text().toDouble() * (1-this->subDown),
+                                    ui->lineEditRangeYmax->text().toDouble() * (1+this->addUp));
+    ui->customPlot->replot();
+
+    return;
+}
+
+void Elf::replotGraph()
+{
+    if (this->constructor)
+        return;
+
+    if (experimentData.isEmpty())
+        return;
+
+    qDebug() << "Plot Axises replot";
+
+    if (experimentData.isEmpty())
+        return;
+
+    ui->customPlot->graph(0)->clearData();
+
+    if (ui->comboBoxXAxisValue->currentText() == "Fext") {
+        if (ui->comboBoxYAxisValue->currentText() == "R") {
+            for (int i = 0; i < experimentData.getSize(); i++) {
+                ui->customPlot->graph(0)->addData(experimentData.getFextat(i),
+                                                  experimentData.getRat(i));
+            }
+
+            ui->lineEditRangeXmin->setText(QString::number(this->experimentData.getFextMin()));
+            ui->lineEditRangeXmax->setText(QString::number(this->experimentData.getFextMax()));
+
+            ui->lineEditRangeYmin->setText(QString::number(this->experimentData.getRMin()));
+            ui->lineEditRangeYmax->setText(QString::number(this->experimentData.getRMax()));
+        }
+
+        if (ui->comboBoxYAxisValue->currentText() == "Theta") {
+            for (int i = 0; i < experimentData.getSize(); i++) {
+                ui->customPlot->graph(0)->addData(experimentData.getFextat(i),
+                                                  experimentData.getThetaat(i));
+            }
+
+            ui->lineEditRangeXmin->setText(QString::number(this->experimentData.getFextMin()));
+            ui->lineEditRangeXmax->setText(QString::number(this->experimentData.getFextMax()));
+
+            ui->lineEditRangeYmin->setText(QString::number(this->experimentData.getThetaMin()));
+            ui->lineEditRangeYmax->setText(QString::number(this->experimentData.getThetaMax()));
+        }
+    }
+
+    if (ui->comboBoxXAxisValue->currentText() == "Time") {
+        if (ui->comboBoxYAxisValue->currentText() == "R") {
+            for (int i = 0; i < experimentData.getSize(); i++) {
+                ui->customPlot->graph(0)->addData(experimentData.getTimeat(i),
+                                                  experimentData.getRat(i));
+            }
+
+            ui->lineEditRangeXmin->setText(QString::number(this->experimentData.getTimeMin()));
+            ui->lineEditRangeXmax->setText(QString::number(this->experimentData.getTimeMax()));
+
+            ui->lineEditRangeYmin->setText(QString::number(this->experimentData.getRMin()));
+            ui->lineEditRangeYmax->setText(QString::number(this->experimentData.getRMax()));
+        }
+
+        if (ui->comboBoxYAxisValue->currentText() == "Theta") {
+            for (int i = 0; i < experimentData.getSize(); i++) {
+                ui->customPlot->graph(0)->addData(experimentData.getTimeat(i),
+                                                  experimentData.getThetaat(i));
+            }
+
+            ui->lineEditRangeXmin->setText(QString::number(this->experimentData.getTimeMin()));
+            ui->lineEditRangeXmax->setText(QString::number(this->experimentData.getTimeMax()));
+
+            ui->lineEditRangeYmin->setText(QString::number(this->experimentData.getThetaMin()));
+            ui->lineEditRangeYmax->setText(QString::number(this->experimentData.getThetaMax()));
+        }
+    }
+
+    ui->customPlot->replot();
+
+    return;
+}
+
+void Elf::pushGraph(const SimpleExperimentPoint &point)
+{
+    qDebug() << "Point at graph adding";
+
+    if (ui->comboBoxXAxisValue->currentText() == "Fext") {
+        if (ui->comboBoxYAxisValue->currentText() == "R") {
+            ui->customPlot->graph(0)->addData(point.Fext, point.R);
+
+            ui->lineEditRangeXmin->setText(QString::number(this->experimentData.getFextMin()));
+            ui->lineEditRangeXmax->setText(QString::number(this->experimentData.getFextMax()));
+
+            ui->lineEditRangeYmin->setText(QString::number(this->experimentData.getRMin()));
+            ui->lineEditRangeYmax->setText(QString::number(this->experimentData.getRMax()));
+        }
+
+        if (ui->comboBoxYAxisValue->currentText() == "Theta") {
+            ui->customPlot->graph(0)->addData(point.Fext, point.Theta);
+
+            ui->lineEditRangeXmin->setText(QString::number(this->experimentData.getFextMin()));
+            ui->lineEditRangeXmax->setText(QString::number(this->experimentData.getFextMax()));
+
+            ui->lineEditRangeYmin->setText(QString::number(this->experimentData.getThetaMin()));
+            ui->lineEditRangeYmax->setText(QString::number(this->experimentData.getThetaMax()));
+        }
+    }
+
+    if (ui->comboBoxXAxisValue->currentText() == "Time") {
+        if (ui->comboBoxYAxisValue->currentText() == "R") {
+            ui->customPlot->graph(0)->addData(point.Time, point.R);
+
+            ui->lineEditRangeXmin->setText(QString::number(this->experimentData.getTimeMin()));
+            ui->lineEditRangeXmax->setText(QString::number(this->experimentData.getTimeMax()));
+
+            ui->lineEditRangeYmin->setText(QString::number(this->experimentData.getRMin()));
+            ui->lineEditRangeYmax->setText(QString::number(this->experimentData.getRMax()));
+        }
+
+        if (ui->comboBoxYAxisValue->currentText() == "Theta") {
+            ui->customPlot->graph(0)->addData(point.Time, point.Theta);
+
+            ui->lineEditRangeXmin->setText(QString::number(this->experimentData.getTimeMin()));
+            ui->lineEditRangeXmax->setText(QString::number(this->experimentData.getTimeMax()));
+
+            ui->lineEditRangeYmin->setText(QString::number(this->experimentData.getThetaMin()));
+            ui->lineEditRangeYmax->setText(QString::number(this->experimentData.getThetaMax()));
+        }
+    }
+
+    return;
+}
+
+void Elf::on_comboBoxXAxisValue_currentTextChanged(const QString &arg1)
+{
+    ui->customPlot->xAxis->setLabel(arg1);
+
+    ui->customPlot->replot();
+
+    replotGraph();
+
+    return;
+}
+
+void Elf::on_comboBoxYAxisValue_currentTextChanged(const QString &arg1)
+{
+    ui->customPlot->yAxis->setLabel(arg1);
+
+    ui->customPlot->replot();
+
+    replotGraph();
+
+    return;
+}
+
 // Lock-in Amplifier
 
 void Elf::on_comboBoxSerialPortLockInAmplifier_currentTextChanged(const QString &arg1)
@@ -265,7 +437,7 @@ void Elf::on_comboBoxSerialPortLockInAmplifier_currentTextChanged(const QString 
 
         hideAll();
 
-        return;
+//        return;
     }
 
     ui->labelSerialPortLockInAmplifier->setText("Connecting");
@@ -420,7 +592,7 @@ void Elf::on_comboBoxSerialPortGenerator_currentTextChanged(const QString &arg1)
 
         hideAll();
 
-        return;
+//        return;
     }
 
     ui->labelSerialPortGenerator->setText("Connecting");
@@ -529,91 +701,30 @@ void Elf::on_comboBoxMode_currentTextChanged(const QString &arg1)
     return;
 }
 
-void Elf::on_pushButtonExport_clicked()
-{
-    qDebug() << "Exporing data";
-
-
-
-    return;
-}
-
-void Elf::on_pushButtonStart_clicked()
-{
-    qDebug() << "Starting experiment";
-
-    double timeToFinish = this->waitBefore +
-            (_round(
-                (ui->doubleSpinBoxFrequencyToGenerator->value() -
-                 ui->doubleSpinBoxFrequencyFromGenerator->value()) /
-                 ui->doubleSpinBoxFrequencyStepGenerator->value()) + 1) *
-            (this->generator->getAverageInputTime() +
-             ui->spinBoxWait->value() +
-             ui->spinBoxAverageOfPoints->value() *
-             (this->lockInAmplifier->getAverageInputTime() +
-              this->lockInAmplifier->getAverageOutputTime()));
-    QTime run = QTime(0, 0, 0, 0).addMSecs(timeToFinish);
-    ui->lineEditTimeToRun->setText(run.toString("hh:mm:ss.z"));
-
-    ui->progressBarExperiment->setMaximum(_round(
-                                              (ui->doubleSpinBoxFrequencyToGenerator->value() -
-                                               ui->doubleSpinBoxFrequencyFromGenerator->value()) /
-                                               ui->doubleSpinBoxFrequencyStepGenerator->value()) + 1);
-
-    this->allTime = QTime::currentTime();
-    this->allTime.start();
-
-    timerStart();
-
-    ui->pushButtonStart->setEnabled(false);
-    ui->pushButtonPause->setEnabled(true);
-    ui->pushButtonStop->setEnabled(true);
-
-    return;
-}
-
-void Elf::on_pushButtonPause_clicked()
-{
-    qDebug() << "Pausing experiment";
-
-    timerPause();
-
-    return;
-}
-
-void Elf::on_pushButtonStop_clicked()
-{
-    qDebug() << "Stopping experiment";
-
-    timerStop();
-
-    ui->pushButtonStart->setEnabled(true);
-    ui->pushButtonPause->setEnabled(false);
-    ui->pushButtonStop->setEnabled(false);
-
-    return;
-}
-
-void Elf::experimentInit()
-{
-    qDebug() << "Experiment initing";
-
-    this->generator->setAmplitude(ui->doubleSpinBoxAmplitudeGenerator->value(), "VR");
-    if (this->generator->workWithOffset())
-        this->generator->setOffset(ui->doubleSpinBoxOffsetGenerator->value());
-    this->generator->setFrequency(ui->doubleSpinBoxFrequencyFromGenerator->value());
-
-    QTest::qWait(this->waitBefore);
-
-    return;
-}
-
 void Elf::changeConstants()
 {
     qDebug() << "Constants changed";
 
     this->points = ui->spinBoxAverageOfPoints->value();
     this->wait = ui->spinBoxWait->value();
+
+    return;
+}
+
+void Elf::on_spinBoxAverageOfPoints_valueChanged(int arg1)
+{
+    qDebug() << "Average of points changed to" << arg1;
+
+    changeConstants();
+
+    return;
+}
+
+void Elf::on_spinBoxWait_valueChanged(int arg1)
+{
+    qDebug() << "Wait changed to" << arg1;
+
+    changeConstants();
 
     return;
 }
@@ -663,20 +774,119 @@ void Elf::timerStop()
     return;
 }
 
-void Elf::on_spinBoxAverageOfPoints_valueChanged(int arg1)
+void Elf::experimentInit()
 {
-    qDebug() << "Average of points changed to" << arg1;
+    qDebug() << "Experiment initing";
 
-    changeConstants();
+    this->generator->setAmplitude(ui->doubleSpinBoxAmplitudeGenerator->value(), "VR");
+    if (this->generator->workWithOffset())
+        this->generator->setOffset(ui->doubleSpinBoxOffsetGenerator->value());
+    this->generator->setFrequency(ui->doubleSpinBoxFrequencyFromGenerator->value());
+
+    QTest::qWait(this->waitBefore);
 
     return;
 }
 
-void Elf::on_spinBoxWait_valueChanged(int arg1)
+QString Elf::getFileName(const QString &header)
 {
-    qDebug() << "Wait changed to" << arg1;
+    QDateTime dateTime = QDateTime::currentDateTime();
+    QString dateTimeString = dateTime.toString("yyyy_MM_dd_HH_mm_ss");
 
-    changeConstants();
+    qDebug() << "File name from header " <<  header + "_" + dateTimeString + ".dat";
+
+    return header + "_" + dateTimeString + ".dat";
+}
+
+void Elf::on_pushButtonExport_clicked()
+{
+    qDebug() << "Exporing data";
+
+    QString fileName = getFileName(this->currentFolder.absolutePath() + "\\Data\\" + ui->lineEditFileHeader);
+
+    qDebug() << "Exporting to file:" << filename;
+
+    fclose(stdout);
+    freopen(fileName.toStdString().c_str(), "w", stdout);
+    printF("Fext\tFextSD\tR\tRSD\tTheta\tThetaSD\tTime");
+    for (int i = 0; i < experimentData.getSize(); i++) {
+        printf("%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\t",
+               experimentData.getFextat(i),
+               experimentData.getFextSDat(i),
+               experimentData.getRat(i),
+               experimentData.getRSDat(i),
+               experimentData.getThetaat(i),
+               experimentData.getThetaSDat(i),
+               experimentData.getTimeat(i));
+    }
+    fclose(stdout);
+
+    return;
+}
+
+void Elf::on_pushButtonStart_clicked()
+{
+    qDebug() << "Starting experiment";
+
+    double timeToFinish = this->waitBefore +
+            (_round(
+                (ui->doubleSpinBoxFrequencyToGenerator->value() -
+                 ui->doubleSpinBoxFrequencyFromGenerator->value()) /
+                 ui->doubleSpinBoxFrequencyStepGenerator->value()) + 1) *
+            (this->generator->getAverageInputTime() +
+             ui->spinBoxWait->value() +
+             ui->spinBoxAverageOfPoints->value() *
+             (this->lockInAmplifier->getAverageInputTime() +
+              this->lockInAmplifier->getAverageOutputTime()));
+    QTime run = QTime(0, 0, 0, 0).addMSecs(timeToFinish);
+    ui->lineEditTimeToRun->setText(run.toString("hh:mm:ss.z"));
+
+    ui->progressBarExperiment->setMaximum(_round(
+                                              (ui->doubleSpinBoxFrequencyToGenerator->value() -
+                                               ui->doubleSpinBoxFrequencyFromGenerator->value()) /
+                                               ui->doubleSpinBoxFrequencyStepGenerator->value()) + 1);
+
+    ui->pushButtonStart->setEnabled(false);
+    ui->pushButtonPause->setEnabled(true);
+    ui->pushButtonStop->setEnabled(true);
+
+    ui->lcdNumber->display(0);
+
+    this->allTime = QTime::currentTime();
+    this->allTime.start();
+
+    timerStart(this->updateTime);
+
+    experiment_Run();
+
+    return;
+}
+
+void Elf::on_pushButtonPause_clicked()
+{
+    qDebug() << "Pausing experiment";
+
+    timerPause();
+
+    return;
+}
+
+void Elf::on_pushButtonStop_clicked()
+{
+    qDebug() << "Stopping experiment";
+
+    timerStop();
+
+    ui->pushButtonStart->setEnabled(true);
+    ui->pushButtonPause->setEnabled(false);
+    ui->pushButtonStop->setEnabled(false);
+
+    return;
+}
+
+void Elf::experiment_Run()
+{
+    qDebug() << "Running an experiment";
 
     return;
 }

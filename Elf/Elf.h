@@ -50,6 +50,9 @@ private:
     QTime allTime;
 
     const int waitBefore = 5000;
+
+    const int updateTime = 200;
+
     const double check = false;
 
     int points;
@@ -62,8 +65,10 @@ private:
     QString reserveFileNameHeader = "Experiment_Reserve_File";
     QString userFileNameHeader = "";
 
-    const double addUP = 0.0001;
-    const double subDown = 0.001;
+    const double addUp   = 0.0001;
+    const double subDown = 0.0001;
+
+    SimpleExperimentData experimentData;
 
     // J4F
     double minX;
@@ -86,6 +91,13 @@ private slots:
     void on_graph_Clicked(QMouseEvent *event);
     void on_comboBoxRange_currentTextChanged(const QString &arg1);
     void on_pushButtonRangeManualreplot_clicked();
+
+    void updateGraph();
+    void replotGraph();
+    void pushGraph(const SimpleExperimentPoint &point);
+
+    void on_comboBoxXAxisValue_currentTextChanged(const QString &arg1);
+    void on_comboBoxYAxisValue_currentTextChanged(const QString &arg1);
 
     // Lock-in Amplifier
     void on_comboBoxSerialPortLockInAmplifier_currentTextChanged(const QString &arg1);
@@ -111,12 +123,15 @@ private slots:
 
     void experimentInit();
 
+    QStirng getFileName(const QString& header = "");
+
     void on_pushButtonExport_clicked();
 
     void on_pushButtonStart_clicked();
     void on_pushButtonPause_clicked();
     void on_pushButtonStop_clicked();
 
+    void experiment_Run();
 
 private:
     Ui::Elf *ui;
