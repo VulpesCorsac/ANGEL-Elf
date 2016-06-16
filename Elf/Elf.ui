@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Elf v 0.0.1</string>
+   <string>Elf v 1.0.0</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <widget class="QGroupBox" name="groupBoxLockInAmplifier">
@@ -858,7 +858,7 @@
              <number>20</number>
             </property>
             <property name="value">
-             <number>10</number>
+             <number>1</number>
             </property>
            </widget>
           </item>

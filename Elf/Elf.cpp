@@ -100,11 +100,9 @@ Elf::Elf(QWidget *parent) :
 
     connect(ui->customPlot, SIGNAL(mouseMove(QMouseEvent*)), this, SLOT(on_graph_Clicked(QMouseEvent*)));
 
-    connect(&(this->run), SIGNAL(timeout()), this, SLOT(updateGraph()));
+//    connect(&(this->run), SIGNAL(timeout()), this, SLOT(updateGraph()));
 
     experimentData.clear();
-
-    J4F();
 
     this->constructor = false;
 
@@ -126,35 +124,6 @@ Elf::~Elf()
     qDebug() << "Elf destructor finished";
 }
 
-void Elf::J4F()
-{
-    QVector <double> x(101), y(101); // initialize with entries 0..100
-    for (int i=0; i<101; ++i)
-    {
-      x[i] = i/50.0 - 1; // x goes from -1 to 1
-      y[i] = x[i]*x[i]; // let's plot a quadratic function
-    }
-    // create graph and assign data to it:
-    ui->customPlot->addGraph();
-    ui->customPlot->graph(0)->setData(x, y);
-    // give the axes some labels:
-    ui->customPlot->xAxis->setLabel("x");
-    ui->customPlot->yAxis->setLabel("y");
-    // set axes ranges, so we see all data:
-    ui->customPlot->xAxis->setRange(-1, 1);
-    ui->customPlot->yAxis->setRange(0, 1);
-    ui->customPlot->replot();
-
-    this->maxX = this->maxY = 1;
-    this->minX = -1;
-    this->minY = 0;
-
-    ui->lineEditRangeXmin->setText(QString::number(minX));
-    ui->lineEditRangeXmax->setText(QString::number(maxX));
-    ui->lineEditRangeYmin->setText(QString::number(minY));
-    ui->lineEditRangeYmax->setText(QString::number(maxY));
-}
-
 // Hiding and showing
 
 void Elf::showAll() {
@@ -172,6 +141,8 @@ void Elf::showAll() {
 
 void Elf::hideAll() {
     qDebug() << "Hiding all";
+
+//    return;
 
     ui->groupBoxExpriment->hide();
     ui->groupBoxGraph->hide();
@@ -212,11 +183,6 @@ void Elf::on_comboBoxRange_currentTextChanged(const QString &arg1)
         ui->labelRangeYmax->hide();
         ui->lineEditRangeYmax->hide();
 
-        ui->lineEditRangeXmax->setText(QString::number(maxX));
-        ui->lineEditRangeXmin->setText(QString::number(minX));
-        ui->lineEditRangeYmax->setText(QString::number(maxY));
-        ui->lineEditRangeYmin->setText(QString::number(minY));
-
         on_pushButtonRangeManualreplot_clicked();
     } else {
         ui->pushButtonRangeManualreplot->show();
@@ -238,11 +204,15 @@ void Elf::on_pushButtonRangeManualreplot_clicked()
 {
     qDebug() << "Manual replot asked for";
 
+    timerPause();
+
     ui->customPlot->xAxis->setRange(ui->lineEditRangeXmin->text().toDouble(),
                                     ui->lineEditRangeXmax->text().toDouble());
     ui->customPlot->yAxis->setRange(ui->lineEditRangeYmin->text().toDouble(),
                                     ui->lineEditRangeYmax->text().toDouble());
     ui->customPlot->replot();
+
+    timerPause();
 
     return;
 }
@@ -252,13 +222,21 @@ void Elf::updateGraph()
     if (ui->comboBoxRange->currentText() == "Manual")
         return;
 
-    qDebug() << "UPDATING GRAPH";
+//    qDebug() << "UPDATING GRAPH";
 
     ui->customPlot->xAxis->setRange(ui->lineEditRangeXmin->text().toDouble() * (1-this->subDown),
                                     ui->lineEditRangeXmax->text().toDouble() * (1+this->addUp));
+
+//    qDebug() << "3.2 SAVE";
+
     ui->customPlot->yAxis->setRange(ui->lineEditRangeYmin->text().toDouble() * (1-this->subDown),
                                     ui->lineEditRangeYmax->text().toDouble() * (1+this->addUp));
+
+//    qDebug() << "3.5 SAVE";
+
     ui->customPlot->replot();
+
+//    qDebug() << "3.7 SAVE";
 
     return;
 }
@@ -272,6 +250,8 @@ void Elf::replotGraph()
         return;
 
     qDebug() << "Plot Axises replot";
+
+    timerPause();
 
     if (experimentData.isEmpty())
         return;
@@ -334,34 +314,40 @@ void Elf::replotGraph()
         }
     }
 
-    ui->customPlot->replot();
+    on_pushButtonRangeManualreplot_clicked();
+
+    timerPause();
 
     return;
 }
 
 void Elf::pushGraph(const SimpleExperimentPoint &point)
 {
-    qDebug() << "Point at graph adding";
+//    qDebug() << "Point at graph adding";
 
     if (ui->comboBoxXAxisValue->currentText() == "Fext") {
         if (ui->comboBoxYAxisValue->currentText() == "R") {
             ui->customPlot->graph(0)->addData(point.Fext, point.R);
 
-            ui->lineEditRangeXmin->setText(QString::number(this->experimentData.getFextMin()));
-            ui->lineEditRangeXmax->setText(QString::number(this->experimentData.getFextMax()));
+            if (ui->comboBoxRange->currentText() == "Auto") {
+                ui->lineEditRangeXmin->setText(QString::number(this->experimentData.getFextMin()));
+                ui->lineEditRangeXmax->setText(QString::number(this->experimentData.getFextMax()));
 
-            ui->lineEditRangeYmin->setText(QString::number(this->experimentData.getRMin()));
-            ui->lineEditRangeYmax->setText(QString::number(this->experimentData.getRMax()));
+                ui->lineEditRangeYmin->setText(QString::number(this->experimentData.getRMin()));
+                ui->lineEditRangeYmax->setText(QString::number(this->experimentData.getRMax()));
+            }
         }
 
         if (ui->comboBoxYAxisValue->currentText() == "Theta") {
             ui->customPlot->graph(0)->addData(point.Fext, point.Theta);
 
-            ui->lineEditRangeXmin->setText(QString::number(this->experimentData.getFextMin()));
-            ui->lineEditRangeXmax->setText(QString::number(this->experimentData.getFextMax()));
+            if (ui->comboBoxRange->currentText() == "Auto") {
+                ui->lineEditRangeXmin->setText(QString::number(this->experimentData.getFextMin()));
+                ui->lineEditRangeXmax->setText(QString::number(this->experimentData.getFextMax()));
 
-            ui->lineEditRangeYmin->setText(QString::number(this->experimentData.getThetaMin()));
-            ui->lineEditRangeYmax->setText(QString::number(this->experimentData.getThetaMax()));
+                ui->lineEditRangeYmin->setText(QString::number(this->experimentData.getThetaMin()));
+                ui->lineEditRangeYmax->setText(QString::number(this->experimentData.getThetaMax()));
+            }
         }
     }
 
@@ -369,21 +355,25 @@ void Elf::pushGraph(const SimpleExperimentPoint &point)
         if (ui->comboBoxYAxisValue->currentText() == "R") {
             ui->customPlot->graph(0)->addData(point.Time, point.R);
 
-            ui->lineEditRangeXmin->setText(QString::number(this->experimentData.getTimeMin()));
-            ui->lineEditRangeXmax->setText(QString::number(this->experimentData.getTimeMax()));
+            if (ui->comboBoxRange->currentText() == "Auto") {
+                ui->lineEditRangeXmin->setText(QString::number(this->experimentData.getTimeMin()));
+                ui->lineEditRangeXmax->setText(QString::number(this->experimentData.getTimeMax()));
 
-            ui->lineEditRangeYmin->setText(QString::number(this->experimentData.getRMin()));
-            ui->lineEditRangeYmax->setText(QString::number(this->experimentData.getRMax()));
+                ui->lineEditRangeYmin->setText(QString::number(this->experimentData.getRMin()));
+                ui->lineEditRangeYmax->setText(QString::number(this->experimentData.getRMax()));
+            }
         }
 
         if (ui->comboBoxYAxisValue->currentText() == "Theta") {
             ui->customPlot->graph(0)->addData(point.Time, point.Theta);
 
-            ui->lineEditRangeXmin->setText(QString::number(this->experimentData.getTimeMin()));
-            ui->lineEditRangeXmax->setText(QString::number(this->experimentData.getTimeMax()));
+            if (ui->comboBoxRange->currentText() == "Auto") {
+                ui->lineEditRangeXmin->setText(QString::number(this->experimentData.getTimeMin()));
+                ui->lineEditRangeXmax->setText(QString::number(this->experimentData.getTimeMax()));
 
-            ui->lineEditRangeYmin->setText(QString::number(this->experimentData.getThetaMin()));
-            ui->lineEditRangeYmax->setText(QString::number(this->experimentData.getThetaMax()));
+                ui->lineEditRangeYmin->setText(QString::number(this->experimentData.getThetaMin()));
+                ui->lineEditRangeYmax->setText(QString::number(this->experimentData.getThetaMax()));
+            }
         }
     }
 
@@ -698,6 +688,8 @@ void Elf::on_comboBoxMode_currentTextChanged(const QString &arg1)
         ui->lcdNumber->show();
     }
 
+    changeConstants();
+
     return;
 }
 
@@ -705,8 +697,18 @@ void Elf::changeConstants()
 {
     qDebug() << "Constants changed";
 
+    timerPause();
+
     this->points = ui->spinBoxAverageOfPoints->value();
     this->wait = ui->spinBoxWait->value();
+
+    this->from = ui->doubleSpinBoxFrequencyFromGenerator->value();
+    this->to   = ui->doubleSpinBoxFrequencyToGenerator->value();
+    this->step = ui->doubleSpinBoxFrequencyStepGenerator->value();
+
+    this->continuous = (ui->comboBoxMode->currentText() == "Continuous");
+
+    timerPause();
 
     return;
 }
@@ -744,6 +746,9 @@ void Elf::timerStart(const int &ms)
 
 void Elf::timerPause()
 {
+    if (!ui->pushButtonPause->isEnabled())
+        return;
+
     this->pause = !this->pause;
     this->stop = false;
 
@@ -802,15 +807,15 @@ void Elf::on_pushButtonExport_clicked()
 {
     qDebug() << "Exporing data";
 
-    QString fileName = getFileName(this->currentFolder.absolutePath() + "\\Data\\" + ui->lineEditFileHeader);
+    QString fileName = getFileName(this->currentFolder.absolutePath() + "\\Data\\" + ui->lineEditFileHeader->text());
 
-    qDebug() << "Exporting to file:" << filename;
+    qDebug() << "Exporting to file:" << fileName;
 
     fclose(stdout);
     freopen(fileName.toStdString().c_str(), "w", stdout);
-    printF("Fext\tFextSD\tR\tRSD\tTheta\tThetaSD\tTime");
+    printf("Fext\tFextSD\tR\tRSD\tTheta\tThetaSD\tTime\n");
     for (int i = 0; i < experimentData.getSize(); i++) {
-        printf("%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\t",
+        printf("%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\n",
                experimentData.getFextat(i),
                experimentData.getFextSDat(i),
                experimentData.getRat(i),
@@ -828,16 +833,20 @@ void Elf::on_pushButtonStart_clicked()
 {
     qDebug() << "Starting experiment";
 
+    ui->customPlot->graph(0)->clearData();
+
     double timeToFinish = this->waitBefore +
             (_round(
                 (ui->doubleSpinBoxFrequencyToGenerator->value() -
                  ui->doubleSpinBoxFrequencyFromGenerator->value()) /
-                 ui->doubleSpinBoxFrequencyStepGenerator->value()) + 1) *
+                 ui->doubleSpinBoxFrequencyStepGenerator->value()) +
+             1 + this->invalidPoints) *
             (this->generator->getAverageInputTime() +
              ui->spinBoxWait->value() +
              ui->spinBoxAverageOfPoints->value() *
              (this->lockInAmplifier->getAverageInputTime() +
               this->lockInAmplifier->getAverageOutputTime()));
+
     QTime run = QTime(0, 0, 0, 0).addMSecs(timeToFinish);
     ui->lineEditTimeToRun->setText(run.toString("hh:mm:ss.z"));
 
@@ -849,11 +858,16 @@ void Elf::on_pushButtonStart_clicked()
     ui->pushButtonStart->setEnabled(false);
     ui->pushButtonPause->setEnabled(true);
     ui->pushButtonStop->setEnabled(true);
+    ui->pushButtonExport->setEnabled(true);
 
     ui->lcdNumber->display(0);
 
+    experimentData.clear();
+
     this->allTime = QTime::currentTime();
     this->allTime.start();
+
+    this->startTime = QDateTime::currentDateTime().toMSecsSinceEpoch()/1000.0;
 
     timerStart(this->updateTime);
 
@@ -884,9 +898,160 @@ void Elf::on_pushButtonStop_clicked()
     return;
 }
 
+void Elf::experiment_StartingPoint()
+{
+    qDebug() << "Experiment starting points settings";
+
+    this->generator->setOffset(ui->doubleSpinBoxOffsetGenerator->value());
+    this->generator->setAmplitude(ui->doubleSpinBoxAmplitudeGenerator->value(), "VR");
+    this->generator->setFrequency(ui->doubleSpinBoxFrequencyFromGenerator->value());
+
+    return;
+}
+
 void Elf::experiment_Run()
 {
     qDebug() << "Running an experiment";
+
+    changeConstants();
+
+//    this->from = 1;
+//    this->to = 100;
+//    this->step = 1;
+
+//    this->points = 1;
+
+    double R = 0;
+    double RSD = 0;
+    double Theta = 0;
+    double ThetaSD = 0;
+    double F = 0;
+    double FSD = 0;
+
+    SimpleExperimentPoint new_point;
+
+    std::vector < double > RSDvector(this->points);
+    std::vector < double > ThetaSDvector(this->points);
+    std::vector < double > FSDvector(this->points);
+
+    fclose(stdout);
+    QString reserveFileName = getFileName(this->reserveFileNameHeader);
+    freopen(reserveFileName.toStdString().c_str(), "w", stdout);
+    printf("Fext\tFextSD\tR\tRSD\tTheta\tThetaSD\tTime\n");
+
+    setbuf(stdout, NULL); // DISABLE BUFERING
+
+    double generatorFrequency;
+
+    ui->lineEditRangeXmin->setText(QString::number(0));
+    ui->lineEditRangeXmax->setText(QString::number(0));
+    ui->lineEditRangeYmin->setText(QString::number(0));
+    ui->lineEditRangeYmax->setText(QString::number(0));
+
+    do {
+        ui->lcdNumber->display((ui->lcdNumber->intValue() + 1) % 100);
+        ui->progressBarExperiment->setValue(0);
+
+        experiment_StartingPoint();
+        QTest::qWait(this->waitBefore);
+
+        for (int i = 0; i < this->invalidPoints; i++) {
+            QTest::qWait(this->wait);
+            this->lockInAmplifier->getRThetaFext(R, Theta, F);
+        }
+
+        generatorFrequency = this->from;
+        while (generatorFrequency <= this->to) {
+            R = F = Theta = 0;
+
+            new_point.Fext = 0;
+            new_point.FextSD = 0;
+            new_point.R = 0;
+            new_point.RSD = 0;
+            new_point.Theta = 0;
+            new_point.ThetaSD = 0;
+            new_point.Time = QDateTime::currentDateTime().toMSecsSinceEpoch()/1000.0 - this->startTime;
+
+//            qDebug() << "1 SAVE";
+
+            for (int point = 0; point < this->points; point++) {
+                this->lockInAmplifier->getRThetaFext(R, Theta, F);
+
+//                R = std::sin(new_point.Time);
+//                Theta = 1 - R;
+//                F = 1 - new_point.Time;
+
+                RSDvector[point] = R;
+                ThetaSDvector[point] = Theta;
+                FSDvector[point] = F;
+
+                new_point.R += R;
+                new_point.Theta += Theta;
+                new_point.Fext += F;
+            }
+
+            new_point.R /= this->points;
+            new_point.Theta /= this->points;
+            new_point.Fext /= this->points;
+
+//            qDebug() << "2 SAVE";
+
+            for (int point = 0; point < this->points; point++) {
+                RSD += _sqr(RSDvector[point] - new_point.R);
+                ThetaSD += _sqr(ThetaSDvector[point] - new_point.Theta);
+                FSD += _sqr(FSDvector[point] - new_point.Fext);
+            }
+
+            RSD = _sqrt(RSD/this->points);
+            ThetaSD = _sqrt(ThetaSD/this->points);
+            FSD = _sqrt(FSD/this->points);
+
+//            qDebug() << "3 SAVE";
+
+            ui->lineEditCurrentReadingsFrequencyGenerator->setText(QString::number(generatorFrequency));
+            ui->lineEditCurrentReadingsRLockInAmplifier->setText(QString::number(new_point.R));
+            ui->lineEditCurrentReadingsThetaLockInAmplifier->setText(QString::number(new_point.Theta));
+            ui->lineEditCurrentReadingsExternalFrequencyLockInAmplifier->setText(QString::number(new_point.Fext));
+
+
+            ui->progressBarExperiment->setValue(ui->progressBarExperiment->value() + 1);
+
+            experimentData.push_back(new_point);
+            pushGraph(new_point);
+
+            printf("%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\n",
+                   new_point.Fext,
+                   new_point.FextSD,
+                   new_point.R,
+                   new_point.RSD,
+                   new_point.Theta,
+                   new_point.ThetaSD);
+
+            updateGraph();
+
+//            qDebug() << "4 SAVE";
+
+            if (this->stop) {
+                return;
+            }
+
+            while (this->pause) {
+                QTest::qWait(10);
+                if (this->stop) {
+                    return;
+                }
+            }
+
+            generatorFrequency += this->step;
+            this->generator->setFrequency(generatorFrequency);
+            QTest::qWait(this->wait);
+        }
+
+        ui->progressBarExperiment->setValue(ui->progressBarExperiment->maximum());
+    } while (this->continuous);
+
+    fclose(stdout);
+    on_pushButtonStop_clicked();
 
     return;
 }

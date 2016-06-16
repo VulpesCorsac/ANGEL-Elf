@@ -49,34 +49,28 @@ private:
     QTimer run;
     QTime allTime;
 
-    const int waitBefore = 5000;
+    double startTime;
 
-    const int updateTime = 200;
+    const int waitBefore    = 1000;
+    const int updateTime    = 100;
+    const int invalidPoints = 3;
 
     const double check = false;
 
-    int points;
-    int wait;
+    int points = 0;
+    int wait   = 0;
 
-    double from;
-    double to;
-    double step;
+    double from = 0;
+    double to   = 0;
+    double step = 0;
 
     QString reserveFileNameHeader = "Experiment_Reserve_File";
-    QString userFileNameHeader = "";
+    QString userFileNameHeader    = "";
 
     const double addUp   = 0.0001;
     const double subDown = 0.0001;
 
     SimpleExperimentData experimentData;
-
-    // J4F
-    double minX;
-    double maxX;
-    double minY;
-    double maxY;
-
-    void J4F();
 
 public:
     explicit Elf(QWidget *parent = 0);
@@ -123,7 +117,7 @@ private slots:
 
     void experimentInit();
 
-    QStirng getFileName(const QString& header = "");
+    QString getFileName(const QString& header = "");
 
     void on_pushButtonExport_clicked();
 
@@ -131,6 +125,7 @@ private slots:
     void on_pushButtonPause_clicked();
     void on_pushButtonStop_clicked();
 
+    void experiment_StartingPoint();
     void experiment_Run();
 
 private:
