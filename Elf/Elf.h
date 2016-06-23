@@ -46,6 +46,8 @@ private:
 
     bool continuous = false;
 
+    bool generatorActive = false;
+
     QTimer run;
     QTime allTime;
 
@@ -56,6 +58,8 @@ private:
     const int invalidPoints = 3;
 
     const double check = false;
+
+    const int generator_send = 3;
 
     int points = 0;
     int wait   = 0;
@@ -76,7 +80,11 @@ public:
     explicit Elf(QWidget *parent = 0);
     ~Elf();
 
+    void stopAll();
+
 private slots:
+    bool inRange(const double &min, const double &max, const double &value);
+
     // Hiding and showing
     void showAll();
     void hideAll();

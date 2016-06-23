@@ -40,8 +40,11 @@ Elf::Elf(QWidget *parent) :
         ui->comboBoxSerialPortGenerator->addItem(info.portName());
     }
 
-    ui->comboBoxSerialPortLockInAmplifier->setCurrentText("COM3");
-    ui->comboBoxSerialPortGenerator->setCurrentText("COM3");
+    ui->comboBoxSerialPortLockInAmplifier->addItem("SET IT");
+    ui->comboBoxSerialPortGenerator->addItem("SET IT");
+
+    ui->comboBoxSerialPortLockInAmplifier->setCurrentText("SET IT");
+    ui->comboBoxSerialPortGenerator->setCurrentText("SET IT");
 
     ui->comboBoxMode->addItem("Single");
     ui->comboBoxMode->addItem("Continuous");
@@ -100,7 +103,7 @@ Elf::Elf(QWidget *parent) :
 
     connect(ui->customPlot, SIGNAL(mouseMove(QMouseEvent*)), this, SLOT(on_graph_Clicked(QMouseEvent*)));
 
-//    connect(&(this->run), SIGNAL(timeout()), this, SLOT(updateGraph()));
+    connect(&(this->run), SIGNAL(timeout()), this, SLOT(updateGraph()));
 
     experimentData.clear();
 
@@ -113,15 +116,37 @@ Elf::~Elf()
 {
     qDebug() << "Elf destructor started";
 
+    stopAll();
+
+    delete ui;
+
+    qDebug() << "Elf destructor finished";
+}
+
+void Elf::stopAll()
+{
+    qDebug() << "Stopping All";
+
+    this->stop = true;
+    this->pause = true;
+
     this->generator->disconnect();
     this->generator->~Generator();
 
     this->lockInAmplifier->disconnect();
     this->lockInAmplifier->~LockInAmplifier();
 
-    delete ui;
+    this->setAttribute(Qt::WA_DeleteOnClose, false);
 
-    qDebug() << "Elf destructor finished";
+    return;
+}
+
+bool Elf::inRange(const double &min, const double &max, const double &value)
+{
+    double _min = std::min(min, max);
+    double _max = std::max(min, max);
+
+    return (_min <= value && value <= _max);
 }
 
 // Hiding and showing
@@ -204,7 +229,7 @@ void Elf::on_pushButtonRangeManualreplot_clicked()
 {
     qDebug() << "Manual replot asked for";
 
-    timerPause();
+//    timerPause();
 
     ui->customPlot->xAxis->setRange(ui->lineEditRangeXmin->text().toDouble(),
                                     ui->lineEditRangeXmax->text().toDouble());
@@ -212,7 +237,7 @@ void Elf::on_pushButtonRangeManualreplot_clicked()
                                     ui->lineEditRangeYmax->text().toDouble());
     ui->customPlot->replot();
 
-    timerPause();
+//    timerPause();
 
     return;
 }
@@ -251,7 +276,7 @@ void Elf::replotGraph()
 
     qDebug() << "Plot Axises replot";
 
-    timerPause();
+//    timerPause();
 
     if (experimentData.isEmpty())
         return;
@@ -316,7 +341,7 @@ void Elf::replotGraph()
 
     on_pushButtonRangeManualreplot_clicked();
 
-    timerPause();
+//    timerPause();
 
     return;
 }
@@ -409,6 +434,9 @@ void Elf::on_comboBoxSerialPortLockInAmplifier_currentTextChanged(const QString 
     if (this->constructor)
         return;
 
+    if (arg1 == "SET IT")
+        return;
+
     if (this->lockInAmplifier->isActive()) {
         this->lockInAmplifier->disconnect();
 
@@ -473,9 +501,9 @@ void Elf::on_comboBoxSerialPortLockInAmplifier_currentTextChanged(const QString 
             ui->labelInputRangeLockInAmplifier->show();
         }
 
-        if (this->generator->isActive()) {
+//        if (this->generator->isActive()) {
             showAll();
-        }
+//        }
 
     } else {
         ui->labelSerialPortLockInAmplifier->setText("Not Connected!");
@@ -580,14 +608,16 @@ void Elf::on_comboBoxSerialPortGenerator_currentTextChanged(const QString &arg1)
         ui->labelFrequencyStepGenerator->hide();
         ui->doubleSpinBoxFrequencyStepGenerator->hide();
 
-        hideAll();
+//        hideAll();
 
 //        return;
     }
 
+    this->generatorActive = false;
+
     ui->labelSerialPortGenerator->setText("Connecting");
 
-    if (this->generator->autoSetGeneratorType(arg1)) {
+    if (arg1 != "SET IT" && this->generator->autoSetGeneratorType(arg1)) {
         ui->labelSerialPortGenerator->setText(this->generator->getGeneratorType());
 
         if (this->check) {
@@ -597,7 +627,9 @@ void Elf::on_comboBoxSerialPortGenerator_currentTextChanged(const QString &arg1)
                 ui->labelSerialPortGenerator->setText(ui->labelSerialPortGenerator->text() + "-");
         }
 
-        this->generator->setDefaultSettings();
+//        this->generator->setDefaultSettings();
+
+        this->generatorActive = true;
 
         if (this->generator->workWithAmplitude()) {
             ui->labelAmplitudeGenerator->show();
@@ -643,7 +675,8 @@ void Elf::on_comboBoxSerialPortGenerator_currentTextChanged(const QString &arg1)
             ui->doubleSpinBoxFrequencyToGenerator->setDecimals(this->generator->getDecimalsFrequency("SINE"));
             ui->doubleSpinBoxFrequencyToGenerator->setValue(1E6);
 
-            ui->doubleSpinBoxFrequencyStepGenerator->setMinimum(this->generator->getMinFrequency("SINE"));
+            ui->doubleSpinBoxFrequencyStepGenerator->setMinimum(-this->generator->getMaxFrequency("SINE"));
+//            ui->doubleSpinBoxFrequencyStepGenerator->setMinimum(this->generator->getMinFrequency("SINE"));
             ui->doubleSpinBoxFrequencyStepGenerator->setMaximum(this->generator->getMaxFrequency("SINE"));
             ui->doubleSpinBoxFrequencyStepGenerator->setSingleStep(this->generator->getStepFrequency("SINE"));
             ui->doubleSpinBoxFrequencyStepGenerator->setDecimals(this->generator->getDecimalsFrequency("SINE"));
@@ -672,7 +705,7 @@ void Elf::on_comboBoxSerialPortGenerator_currentTextChanged(const QString &arg1)
         ui->labelFrequencyStepGenerator->hide();
         ui->doubleSpinBoxFrequencyStepGenerator->hide();
 
-        hideAll();
+//        hideAll();
     }
 }
 
@@ -702,9 +735,13 @@ void Elf::changeConstants()
     this->points = ui->spinBoxAverageOfPoints->value();
     this->wait = ui->spinBoxWait->value();
 
-    this->from = ui->doubleSpinBoxFrequencyFromGenerator->value();
-    this->to   = ui->doubleSpinBoxFrequencyToGenerator->value();
-    this->step = ui->doubleSpinBoxFrequencyStepGenerator->value();
+    if (this->generatorActive) {
+        this->from = ui->doubleSpinBoxFrequencyFromGenerator->value();
+        this->to   = ui->doubleSpinBoxFrequencyToGenerator->value();
+        this->step = ui->doubleSpinBoxFrequencyStepGenerator->value();
+    } else {
+        this->from = this->to = this->step = 0;
+    }
 
     this->continuous = (ui->comboBoxMode->currentText() == "Continuous");
 
@@ -813,11 +850,12 @@ void Elf::on_pushButtonExport_clicked()
 
     fclose(stdout);
     freopen(fileName.toStdString().c_str(), "w", stdout);
-    printf("Fext\tFextSD\tR\tRSD\tTheta\tThetaSD\tTime\n");
+    printf("Fext\tFextSD\tFgen\tR\tRSD\tTheta\tThetaSD\tTime\n");
     for (int i = 0; i < experimentData.getSize(); i++) {
-        printf("%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\n",
+        printf("%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\n",
                experimentData.getFextat(i),
                experimentData.getFextSDat(i),
+               experimentData.getFgenat(i),
                experimentData.getRat(i),
                experimentData.getRSDat(i),
                experimentData.getThetaat(i),
@@ -826,12 +864,58 @@ void Elf::on_pushButtonExport_clicked()
     }
     fclose(stdout);
 
+    qDebug() << "Exporing settings";
+
+    fileName = getFileName(this->currentFolder.absolutePath() + "\\Data\\" + ui->lineEditFileHeader->text() + "_Experiment_Settings");
+
+    qDebug() << "Exporting to file:" << fileName;
+
+    fclose(stdout);
+    freopen(fileName.toStdString().c_str(), "w", stdout);
+
+    std::cout << "Current experiment settings:" << std::endl;
+    std::cout << std::endl;
+
+    if (!this->generatorActive) {
+        std::cout << "Generator - not active" << std::endl;
+    } else {
+        std::cout << "Generator model: " << ui->labelSerialPortGenerator->text().toStdString() << std::endl;
+        std::cout << "   Offset: " << ui->doubleSpinBoxOffsetGenerator->value() << " V" << std::endl;
+        std::cout << "   Amplitude: " << ui->doubleSpinBoxAmplitudeGenerator->value() << " Vrms" << std::endl;
+        std::cout << "   Frequency from: " << ui->doubleSpinBoxFrequencyFromGenerator->value() << " Hz" << std::endl;
+        std::cout << "   Frequency to:   " << ui->doubleSpinBoxFrequencyToGenerator->value() << " Hz" << std::endl;
+        std::cout << "   Frequency step: " << ui->doubleSpinBoxFrequencyStepGenerator->value() << " Hz" << std::endl;
+        if (ui->checkBoxPollGenerator->isChecked())
+            std::cout << "GENERATOR POLLING IS ON" << std::endl;
+    }
+
+    std::cout << std::endl;
+    std::cout << "Lock-in amplifier model: " << ui->labelSerialPortLockInAmplifier->text().toStdString() << std::endl;
+    std::cout << "   Time constant: " << ui->comboBoxTimeConstantLockInAmplifier->currentText().toStdString() << std::endl;
+    if (this->lockInAmplifier->workWithVoltageInputRange())
+        std::cout << "   Input range:   " << ui->comboBoxInputVoltageRangeLockInAmplifier->currentText().toStdString() <<  std::endl;
+    std::cout << "   Sensivity:     " << ui->comboBoxSensivityLockInAmplifier->currentText().toStdString() <<  std::endl;
+    if (ui->checkBoxAutosettingsLockInAmplifier->isChecked())
+        std::cout << "   LOCK-IN AMPLIFIER AUTOSETTINGS CHECKED" << std::endl;
+
+    std::cout << std::endl;
+    std::cout << "Experiment:" << std::endl;
+    std::cout << "   Mode: " << ui->comboBoxMode->currentText().toStdString() << std::endl;
+    if (ui->comboBoxMode->currentText() == "Continuous")
+        std::cout << "       Last round was " << ui->lcdNumber->value() << std::endl;
+    std::cout << "   Average of " << ui->spinBoxAverageOfPoints->value() << " points" << std::endl;
+    std::cout << "   For new point wait for " << ui->spinBoxWait->value() << " ms" << std::endl;
+
+    fclose(stdout);
+
     return;
 }
 
 void Elf::on_pushButtonStart_clicked()
 {
     qDebug() << "Starting experiment";
+
+    this->setAttribute(Qt::WA_DeleteOnClose, true);
 
     ui->customPlot->graph(0)->clearData();
 
@@ -854,6 +938,10 @@ void Elf::on_pushButtonStart_clicked()
                                               (ui->doubleSpinBoxFrequencyToGenerator->value() -
                                                ui->doubleSpinBoxFrequencyFromGenerator->value()) /
                                                ui->doubleSpinBoxFrequencyStepGenerator->value()) + 1);
+    if (!this->generatorActive) {
+        ui->progressBarExperiment->setMaximum(1);
+        ui->progressBarExperiment->setValue(0);
+    }
 
     ui->pushButtonStart->setEnabled(false);
     ui->pushButtonPause->setEnabled(true);
@@ -889,6 +977,8 @@ void Elf::on_pushButtonStop_clicked()
 {
     qDebug() << "Stopping experiment";
 
+    this->setAttribute(Qt::WA_DeleteOnClose, false);
+
     timerStop();
 
     ui->pushButtonStart->setEnabled(true);
@@ -901,6 +991,9 @@ void Elf::on_pushButtonStop_clicked()
 void Elf::experiment_StartingPoint()
 {
     qDebug() << "Experiment starting points settings";
+
+    if (!this->generatorActive)
+        return;
 
     this->generator->setOffset(ui->doubleSpinBoxOffsetGenerator->value());
     this->generator->setAmplitude(ui->doubleSpinBoxAmplitudeGenerator->value(), "VR");
@@ -915,12 +1008,6 @@ void Elf::experiment_Run()
 
     changeConstants();
 
-//    this->from = 1;
-//    this->to = 100;
-//    this->step = 1;
-
-//    this->points = 1;
-
     double R = 0;
     double RSD = 0;
     double Theta = 0;
@@ -934,10 +1021,53 @@ void Elf::experiment_Run()
     std::vector < double > ThetaSDvector(this->points);
     std::vector < double > FSDvector(this->points);
 
+    qDebug() << "Exporing settings";
+
+    QString fileName = getFileName(this->currentFolder.absolutePath() + "\\Data\\Reserve\\" + ui->lineEditFileHeader->text() + "_Experiment_Settings");
+
+    qDebug() << "Exporting to file:" << fileName;
+
     fclose(stdout);
+    freopen(fileName.toStdString().c_str(), "w", stdout);
+
+    std::cout << "Current experiment settings:" << std::endl;
+    std::cout << std::endl;
+
+    if (!this->generatorActive) {
+        std::cout << "Generator - not active" << std::endl;
+    } else {
+        std::cout << "Generator model: " << ui->labelSerialPortGenerator->text().toStdString() << std::endl;
+        std::cout << "   Offset: " << ui->doubleSpinBoxOffsetGenerator->value() << " V" << std::endl;
+        std::cout << "   Amplitude: " << ui->doubleSpinBoxAmplitudeGenerator->value() << " Vrms" << std::endl;
+        std::cout << "   Frequency from: " << ui->doubleSpinBoxFrequencyFromGenerator->value() << " Hz" << std::endl;
+        std::cout << "   Frequency to:   " << ui->doubleSpinBoxFrequencyToGenerator->value() << " Hz" << std::endl;
+        std::cout << "   Frequency step: " << ui->doubleSpinBoxFrequencyStepGenerator->value() << " Hz" << std::endl;
+        if (ui->checkBoxPollGenerator->isChecked())
+            std::cout << "GENERATOR POLLING IS ON" << std::endl;
+    }
+
+    std::cout << std::endl;
+    std::cout << "Lock-in amplifier model: " << ui->labelSerialPortLockInAmplifier->text().toStdString() << std::endl;
+    std::cout << "   Time constant: " << ui->comboBoxTimeConstantLockInAmplifier->currentText().toStdString() << std::endl;
+    if (this->lockInAmplifier->workWithVoltageInputRange())
+        std::cout << "   Input range:   " << ui->comboBoxInputVoltageRangeLockInAmplifier->currentText().toStdString() <<  std::endl;
+    std::cout << "   Sensivity:     " << ui->comboBoxSensivityLockInAmplifier->currentText().toStdString() <<  std::endl;
+    if (ui->checkBoxAutosettingsLockInAmplifier->isChecked())
+        std::cout << "   LOCK-IN AMPLIFIER AUTOSETTINGS CHECKED" << std::endl;
+
+    std::cout << std::endl;
+    std::cout << "Experiment:" << std::endl;
+    std::cout << "   Mode: " << ui->comboBoxMode->currentText().toStdString() << std::endl;
+    if (ui->comboBoxMode->currentText() == "Continuous")
+        std::cout << "       Last round was " << ui->lcdNumber->value() << std::endl;
+    std::cout << "   Average of " << ui->spinBoxAverageOfPoints->value() << " points" << std::endl;
+    std::cout << "   For new point wait for " << ui->spinBoxWait->value() << " ms" << std::endl;
+
+    fclose(stdout);
+
     QString reserveFileName = getFileName(this->reserveFileNameHeader);
     freopen(reserveFileName.toStdString().c_str(), "w", stdout);
-    printf("Fext\tFextSD\tR\tRSD\tTheta\tThetaSD\tTime\n");
+    printf("Fext\tFextSD\tFgen\tR\tRSD\tTheta\tThetaSD\tTime\n");
 
     setbuf(stdout, NULL); // DISABLE BUFERING
 
@@ -961,21 +1091,27 @@ void Elf::experiment_Run()
         }
 
         generatorFrequency = this->from;
-        while (generatorFrequency <= this->to) {
+        while (inRange(this->from, this->to, generatorFrequency)) {
             R = F = Theta = 0;
+            RSD = FSD = ThetaSD = 0;
 
             new_point.Fext = 0;
             new_point.FextSD = 0;
+            new_point.Fgen = generatorFrequency;
             new_point.R = 0;
             new_point.RSD = 0;
             new_point.Theta = 0;
             new_point.ThetaSD = 0;
             new_point.Time = QDateTime::currentDateTime().toMSecsSinceEpoch()/1000.0 - this->startTime;
 
+            QTime run = QTime(0, 0, 0, 0).addMSecs(new_point.Time*1000);
+            ui->lineEditTimePassed->setText(run.toString("hh:mm:ss.z"));
+
 //            qDebug() << "1 SAVE";
 
             for (int point = 0; point < this->points; point++) {
-                this->lockInAmplifier->getRThetaFext(R, Theta, F);
+//                this->lockInAmplifier->getRThetaFext(R, Theta, F);
+                R = this->lockInAmplifier->getR();
 
 //                R = std::sin(new_point.Time);
 //                Theta = 1 - R;
@@ -1006,26 +1142,35 @@ void Elf::experiment_Run()
             ThetaSD = _sqrt(ThetaSD/this->points);
             FSD = _sqrt(FSD/this->points);
 
+            new_point.FextSD = FSD;
+            new_point.RSD = RSD;
+            new_point.ThetaSD = ThetaSD;
+
 //            qDebug() << "3 SAVE";
 
             ui->lineEditCurrentReadingsFrequencyGenerator->setText(QString::number(generatorFrequency));
-            ui->lineEditCurrentReadingsRLockInAmplifier->setText(QString::number(new_point.R));
-            ui->lineEditCurrentReadingsThetaLockInAmplifier->setText(QString::number(new_point.Theta));
-            ui->lineEditCurrentReadingsExternalFrequencyLockInAmplifier->setText(QString::number(new_point.Fext));
+            ui->lineEditCurrentReadingsRLockInAmplifier->setText(QString::number(new_point.R, 'g', 6) + " +- " +
+                                                                 QString::number(100*new_point.RSD/new_point.R, 'g', 2) + "%");
+            ui->lineEditCurrentReadingsThetaLockInAmplifier->setText(QString::number(new_point.Theta, 'g', 6) + " +- " +
+                                                                     QString::number(100*new_point.ThetaSD/new_point.Theta, 'g', 2) + "%");
+            ui->lineEditCurrentReadingsExternalFrequencyLockInAmplifier->setText(QString::number(new_point.Fext, 'g', 6) + " +- " +
+                                                                                 QString::number(100*new_point.FextSD/new_point.Fext, 'g', 2) + "%");
 
-
-            ui->progressBarExperiment->setValue(ui->progressBarExperiment->value() + 1);
+            if (this->generatorActive)
+                ui->progressBarExperiment->setValue(ui->progressBarExperiment->value() + 1);
 
             experimentData.push_back(new_point);
             pushGraph(new_point);
 
-            printf("%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\n",
+            printf("%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\t%0.20e\n",
                    new_point.Fext,
                    new_point.FextSD,
+                   new_point.Fgen,
                    new_point.R,
                    new_point.RSD,
                    new_point.Theta,
-                   new_point.ThetaSD);
+                   new_point.ThetaSD,
+                   new_point.Time);
 
             updateGraph();
 
@@ -1043,7 +1188,20 @@ void Elf::experiment_Run()
             }
 
             generatorFrequency += this->step;
-            this->generator->setFrequency(generatorFrequency);
+
+            if (this->generatorActive) {
+                if (ui->checkBoxPollGenerator->isChecked()) {
+                    for (int send = 0; send < this->generator_send; send++) {
+                        this->generator->setFrequency(generatorFrequency);
+                        QTest::qWait(50);
+                        if (_abs(this->generator->getFrequency() - generatorFrequency < this->step))
+                            break;
+                    }
+                } else {
+                    this->generator->setFrequency(generatorFrequency);
+                }
+            }
+
             QTest::qWait(this->wait);
         }
 

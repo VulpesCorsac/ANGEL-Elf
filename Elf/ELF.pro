@@ -41,6 +41,7 @@ HEADERS  += Elf.h \
     ../ANGEL/DataStructures/DataSharing/TDataSharing.h \
     ../ANGEL/DataStructures/ExperimentData/ExperimentData.h \
     ../ANGEL/DataStructures/ExperimentData/SimpleExperiment.h \
+    ../ANGEL/DataStructures/ExperimentData/Kinetics.h \
     ../ANGEL/DataStructures/ExperimentData/DataVector.h \
     ../ANGEL/DataStructures/LockFreeQueue/TLockFreeQueue.h \
     ../ANGEL/DataStructures/AllDataStructures.h \
@@ -58,4 +59,5 @@ HEADERS  += Elf.h \
     ../ANGEL/Functions/AllFunctions.h \
     ../ANGEL/Angel.h \
     qcustomplot.h
+
 FORMS    += Elf.ui
