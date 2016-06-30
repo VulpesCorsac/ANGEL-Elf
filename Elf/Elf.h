@@ -53,7 +53,7 @@ private:
 
     double startTime;
 
-    const int waitBefore    = 1000;
+    const int waitBefore    = 100;
     const int updateTime    = 100;
     const int invalidPoints = 3;
 

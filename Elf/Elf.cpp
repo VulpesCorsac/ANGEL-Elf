@@ -93,7 +93,7 @@ Elf::Elf(QWidget *parent) :
     //*/
 
     ui->customPlot->clearGraphs();
-    ui->customPlot->addGraph();
+    ui->customPlot->addGraplot_1ph();
 
     ui->customPlot->xAxis->setLabel(ui->comboBoxXAxisValue->currentText());
     ui->customPlot->yAxis->setLabel(ui->comboBoxYAxisValue->currentText());
@@ -277,9 +277,6 @@ void Elf::replotGraph()
     qDebug() << "Plot Axises replot";
 
 //    timerPause();
-
-    if (experimentData.isEmpty())
-        return;
 
     ui->customPlot->graph(0)->clearData();
 
@@ -866,7 +863,7 @@ void Elf::on_pushButtonExport_clicked()
 
     qDebug() << "Exporing settings";
 
-    fileName = getFileName(this->currentFolder.absolutePath() + "\\Data\\" + ui->lineEditFileHeader->text() + "_Experiment_Settings");
+    fileName = getFileName(this->currentFolder.absolutePath() + "\\Data\\" + "Experiment_Settings_" + ui->lineEditFileHeader->text());
 
     qDebug() << "Exporting to file:" << fileName;
 
@@ -1023,7 +1020,7 @@ void Elf::experiment_Run()
 
     qDebug() << "Exporing settings";
 
-    QString fileName = getFileName(this->currentFolder.absolutePath() + "\\Data\\Reserve\\" + ui->lineEditFileHeader->text() + "_Experiment_Settings");
+    QString fileName = getFileName(this->currentFolder.absolutePath() + "\\Data\\Reserve\\" + "Experiment_Settings_" + this->reserveFileNameHeader);
 
     qDebug() << "Exporting to file:" << fileName;
 
@@ -1110,8 +1107,8 @@ void Elf::experiment_Run()
 //            qDebug() << "1 SAVE";
 
             for (int point = 0; point < this->points; point++) {
-//                this->lockInAmplifier->getRThetaFext(R, Theta, F);
-                R = this->lockInAmplifier->getR();
+                this->lockInAmplifier->getRThetaFext(R, Theta, F);
+//                R = this->lockInAmplifier->getR();
 
 //                R = std::sin(new_point.Time);
 //                Theta = 1 - R;
