@@ -882,6 +882,8 @@ void Elf::on_pushButtonExport_clicked()
         std::cout << "   Frequency from: " << ui->doubleSpinBoxFrequencyFromGenerator->value() << " Hz" << std::endl;
         std::cout << "   Frequency to:   " << ui->doubleSpinBoxFrequencyToGenerator->value() << " Hz" << std::endl;
         std::cout << "   Frequency step: " << ui->doubleSpinBoxFrequencyStepGenerator->value() << " Hz" << std::endl;
+        if (this->generator->workWithOutputImpedance())
+            std::cout << "  Output impedance: " << this->generator->getOutputImpedance().toStdString() << std::endl;
         if (ui->checkBoxPollGenerator->isChecked())
             std::cout << "GENERATOR POLLING IS ON" << std::endl;
     }
@@ -1039,6 +1041,8 @@ void Elf::experiment_Run()
         std::cout << "   Frequency from: " << ui->doubleSpinBoxFrequencyFromGenerator->value() << " Hz" << std::endl;
         std::cout << "   Frequency to:   " << ui->doubleSpinBoxFrequencyToGenerator->value() << " Hz" << std::endl;
         std::cout << "   Frequency step: " << ui->doubleSpinBoxFrequencyStepGenerator->value() << " Hz" << std::endl;
+        if (this->generator->workWithOutputImpedance())
+            std::cout << "  Output impedance: " << this->generator->getOutputImpedance().toStdString() << std::endl;
         if (ui->checkBoxPollGenerator->isChecked())
             std::cout << "GENERATOR POLLING IS ON" << std::endl;
     }

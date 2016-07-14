@@ -780,7 +780,7 @@
         <item>
          <widget class="QLCDNumber" name="lcdNumber">
           <property name="digitCount">
-           <number>2</number>
+           <number>3</number>
           </property>
          </widget>
         </item>
